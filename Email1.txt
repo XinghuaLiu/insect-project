@@ -1,0 +1,40 @@
+So. Dr. Ene bought a CMOS camera. She intends to use it to take images at frequencies high enough to detect insects.
+
+The camera model used is SV643M. Here is the manufacturer's webpage for the camera: http://www.epixinc.com/products/sv643.htm
+To note is that under the Specifications section, there is a table of maximum frame rates achievable. The values under this table are incorrect for resolutions smaller than the maximum resolution. These values are what the camera believes it can achieve. It is actually slower than this. This is something I noticed experimentally and confirmed with the camera's engineer via e-mail. To compensate for this, I experimentally derived the camera's actual maximum frame rates and hard-coded them in.
+
+The software I have written is based on the manufacturer's XCLIB library for interfacing with their cameras. Here is a reference manual: http://pet.dote.hu/~ogabor/xclib.htm
+Although the actual XCLIB library has not actually been purchased, it is automatically downloaded in .so form with the company's trial version software (XCAP). I found the .so file inside XCAP's installation folder and just used it. Buying the XCLIB library itself costs $995 as I recall, and I believe the current solution is more than sufficient.
+
+
+The camera has a grid of pixels with resolution 640x480. Dr. Ene is currently interested in grabbing horizontal "lines" of pixels; that is, limiting the camera's resolution to, for example, 640x4. XCLIB easily allows for these lines to be chosen from anywhere on the grid of pixels; they can be the top 4 lines, the bottom 4 lines, the middle 4 lines, etcetera. My software was designed around this design goal.
+
+The code is currently structured as such:
+
+1. The user is prompted for desired settings (frame-rate, run-time, number of horizontal pixel lines necessary, position of central pixel line).
+2. The user's desired settings are adjusted. For example, the camera cannot handle a resolution of 640x3, only 640x2 or 640x4, so this would be adjusted. The camera has both a maximum frame-rate and discrete frame-rate levels, so this is adjusted. One cannot request a resolution of 640x4 centered around line 0 (since that would result in lines -2, -1, 0, 1), so this is adjusted.
+3. The camera is turned on and begins taking images. This can be done through either the goLive function (continuous capture) or doSnap function (discrete individual frame capture). I have not analyzed the benefits/drawbacks of these two options, and I currently just use goLive. doSnap may be superior.
+4. The camera saves the raw data dump of each image frame to a file.
+5. Once the user's desired run-time has been met, the camera stops taking pictures.
+6. The camera loads each raw data dump image frame file into its memory, and dumps readable pixel values to a file.
+
+The reason steps 4-6 are done as such is due to speed. When I wrote my exploratory Python code, there was an order of magnitude difference between the frequency achievable with this implementation, and the frequency achievable by directly saving readable pixel values as the camera is taking images.
+This order of magnitude difference may be nullified through better coding or through settling for slower frame-rates.
+
+One major feature that still needs to be implemented in the code is to have it capture images and precise time intervals, perhaps by just putting a ualarm in. Currently, the time interval between consecutive image captures is only approximate.
+
+
+There have been two major issues that should be stated:
+1. The XCLIB function that allows for the resolution and timing of the camera to be modified does not seem to work at all under Linux kernel 4.15.X. This is an issue I have yet to ask EPIX about, but I have independently verified it. Code that works under 4.14.X just does not work under 4.15.X, and debugging it shows that changing the timing of the camera simply has no effect upon the camera's operation. To combat this issue, I have changed the boot order of Dr. Ene's laptop to boot into 4.14.X by default and rolled back the camera's drivers.
+2. I am for some unknown reason unable to utilize XCLIB functions that return doubles inside of C code, despite being able to use them just fine from inside Python code. The reason is likely some simple obscure fact relating to the double data format, or to the compiler, or to my compilation options. However, I had given up on trying to figure it out. This is why CHowardWrapper.py initially accesses the camera and fixes the frame rate.
+
+One major error I have made while helping Dr. Ene is forgetting to ask about just how fast insects flap their wings. Googling this information now provides me with a realistic upper limit of around 300 Hz for bees. According to Nyquist's theorem then, we would only need a sampling rate of about 600 Hz; maybe 1 kHz to be safe. I have been stubbornly making the camera work at 10 kHz. Reducing the software's goal from operating at 10 kHz to operating at 1 kHz may help solve some issues; file size, ability to analyze data as soon as it is received, etcetera.
+
+Text me with any further questions,
+Teo
+
+P.S:
+I was hoping to have polished code for you when I sent this e-mail. I have to work from 12 to 8, and the code is not currently very polished. I have attached what is currently there.
+I was in the process of translating everything from Python to C, I did not finish.
+I think I will finish tonight. The only thing left is to debug some char * pointers.
+Once that is done, I will go back in and clean and add comments.
