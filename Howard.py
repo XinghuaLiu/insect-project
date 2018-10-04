@@ -4,7 +4,7 @@ import sys,os
 from ctypes import *
 
 # Our C library
-cstuff=CDLL("/home/ema/Downloads/cameraTeo/libcstuff.so")
+cstuff=CDLL("/home/ema/Downloads/CameraXi/cameraTeo/libcstuff.so")
 
 # XCLIB's so, taken out of the xcap files
 epix=CDLL("/usr/local/xcap/program/libkxclib_x86_64.so")

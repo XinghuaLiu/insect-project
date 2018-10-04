@@ -302,8 +302,9 @@ void work(int nLines, int nImages, double delay, int linePos)
 
     printf("Starting\n");
     int ctr=0;
-
-// Set the initial alarm.
+    double Exposure = 0;
+    Exposure = pxd_SILICONVIDEO_getExposure(0x1);
+    printf("Expooure rate %1.2f ms",Exposure);// Set the initial alarm.
     ualarm((useconds_t)(int)(1000*delay),0);
     while(ctr<nImages){
         ctr+=1;
